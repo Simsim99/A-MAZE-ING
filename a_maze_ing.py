@@ -3,7 +3,6 @@ import curses
 from curses import wrapper
 import random
 
-
 def draw_screen(stdscr, maze):
     stdscr.clear()
     for y, row in enumerate(maze.grid):
@@ -27,9 +26,6 @@ def draw_screen(stdscr, maze):
     stdscr.refresh()
 
 def  animate_path(stdscr,path_list):
-    
-    # stdscr.refresh()
-    # stdscr.getch()
     for y, x in path_list[1:-1]:
         screen_y = (y * 2) + 1
         screen_x = (x * 3) + 1
@@ -38,25 +34,45 @@ def  animate_path(stdscr,path_list):
         stdscr.attroff(curses.color_pair(1))
         stdscr.refresh()
         curses.napms(95)
-    
-    # stdscr.refresh()
 
-def handle_generation(maze_object, is_perfect, start_coords, end_coords):
-    maze_object.generate()
+def handle_generation(maze_object, is_perfect, start_coords, end_coords, algo_gen):
+    if algo_gen == "tree":
+        maze_object.tree_generate()
+    else:
+        maze_object.aldous_generate()
     if is_perfect == False:
         maze_object.braid()
     path = maze_object.find_path(start_coords, end_coords)
     return (path)
 
+def read_file():
+    dictt = {}
+    index = 0
+    with open("config.txt", "r") as file:
+        for line in file:
+            line = line.strip().split("=")
+            dictt[line[index]] = line[index + 1]
+    return (dictt)
+
 def main(stdscr):
+    my_dict = read_file()
+    if my_dict["PERFECT"] == "True":
+        is_perfect = True
+    else:
+        is_perfect = False
     curses.curs_set(0)
     curses.start_color()
+    entry_tuple = tuple(int(i) for i in my_dict["ENTRY"].split(","))
+    exit_tuple = tuple(int(i) for i in my_dict["EXIT"].split(","))
     curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
     curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)
     curses.init_pair(4, curses.COLOR_CYAN, curses.COLOR_BLACK)
-    maze = MazeGenerator(20, 15)
-    path = handle_generation(maze, True, (14, 0), (0, 0))
+    maze = MazeGenerator(int(my_dict['WIDTH']), int(my_dict[('HEIGHT')]))
+    
+    path = handle_generation(maze, is_perfect, entry_tuple, exit_tuple, my_dict['GEN_ALGO'])
+    maze.hexa_converter()
+    maze.directions_path(entry_tuple, exit_tuple)
     draw_screen(stdscr, maze)
     y, x = path[0]
     screen_y = (y * 2) + 1
@@ -71,6 +87,13 @@ def main(stdscr):
     stdscr.attron(curses.color_pair(3))
     stdscr.addstr(screen_y, screen_x, "██")
     stdscr.attroff(curses.color_pair(3))
+    stdscr.addstr((int(my_dict[('HEIGHT')]) * 2) + 2, 0, "=== A-Maze-ing ===")
+    stdscr.addstr((int(my_dict[('HEIGHT')]) * 2) + 3, 0, "1. Re-generate a new maze")
+    stdscr.addstr((int(my_dict[('HEIGHT')]) * 2) + 4, 0, "2. Show/Hide path from entry to exit")
+    stdscr.addstr((int(my_dict[('HEIGHT')]) * 2) + 5, 0, "3. Rotate maze colors")
+    stdscr.addstr((int(my_dict[('HEIGHT')]) * 2) + 6, 0, "4. Quit")
+    stdscr.addstr((int(my_dict[('HEIGHT')]) * 2) + 7, 0, "5. Choice? (1-4): ")
+    curses.curs_set(2)
     my_colors = [
         curses.COLOR_CYAN,
         curses.COLOR_GREEN,
@@ -79,14 +102,16 @@ def main(stdscr):
         ]
     color_index = 0
     path_shown = False
-    # path = []
     while True:
         key = stdscr.getch()
         if key == ord('1'):
             path_shown = False
             stdscr.clear()
-            new_maze = MazeGenerator(20, 15)
-            path = handle_generation(new_maze, False, (14, 0), (0, 0))
+            new_maze = MazeGenerator(int(my_dict['WIDTH']), int(my_dict[('HEIGHT')]))
+            
+            path = handle_generation(new_maze, is_perfect, entry_tuple, exit_tuple, my_dict['GEN_ALGO'])
+            new_maze.hexa_converter()
+            new_maze.directions_path(entry_tuple, exit_tuple)
             draw_screen(stdscr, new_maze)
             y, x = path[0]
             screen_y = (y * 2) + 1
@@ -101,8 +126,18 @@ def main(stdscr):
             stdscr.attron(curses.color_pair(3))
             stdscr.addstr(screen_y, screen_x, "██")
             stdscr.attroff(curses.color_pair(3))
+            stdscr.addstr((int(my_dict[('HEIGHT')]) * 2) + 2, 0, "=== A-Maze-ing ===")
+            stdscr.addstr((int(my_dict[('HEIGHT')]) * 2) + 3, 0, "1. Re-generate a new maze")
+            stdscr.addstr((int(my_dict[('HEIGHT')]) * 2) + 4, 0, "2. Show/Hide path from entry to exit")
+            stdscr.addstr((int(my_dict[('HEIGHT')]) * 2) + 5, 0, "3. Rotate maze colors")
+            stdscr.addstr((int(my_dict[('HEIGHT')]) * 2) + 6, 0, "4. Quit")
+            stdscr.addstr((int(my_dict[('HEIGHT')]) * 2) + 7, 0, "5. Choice? (1-4): ")
+            curses.curs_set(2)
+
             stdscr.refresh()
+            
         elif key == ord('2'):
+            curses.curs_set(0)
             if path_shown == False:
                 animate_path(stdscr, path)
                 path_shown = True
@@ -113,17 +148,17 @@ def main(stdscr):
                     stdscr.addstr(screen_y, screen_x, "  ")
                     path_shown = False
                 stdscr.refresh()
+            stdscr.move((int(my_dict[('HEIGHT')]) * 2) + 7, 18)
+            curses.curs_set(2)
         elif key == ord('3'):
-            # color_index = (color_index + 1) % len(my_colors)
+            stdscr.move((int(my_dict[('HEIGHT')]) * 2) + 7, 18)
+            curses.curs_set(2)
             color_index = random.choice([0, 1, 2, 3])
             curses.init_pair(1, my_colors[color_index], curses.COLOR_BLACK)
-            # color_index = (color_index + 1) % len(my_colors)
             color_index = random.choice([0, 1, 2, 3])
             curses.init_pair(2, my_colors[color_index], curses.COLOR_BLACK)
-            # color_index = (color_index + 1) % len(my_colors)
             color_index = random.choice([0, 1, 2, 3])
             curses.init_pair(3, my_colors[color_index], curses.COLOR_BLACK)
-            # color_index = (color_index + 1) % len(my_colors)
             color_index = random.choice([0, 1, 2, 3])
             curses.init_pair(4, my_colors[color_index], curses.COLOR_BLACK)
             stdscr.refresh()

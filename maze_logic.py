@@ -1,5 +1,5 @@
 from collections import deque
-from models import Cell
+from models import Cell, check_position, check_grid
 import random
 
 
@@ -26,7 +26,7 @@ class MazeGenerator():
             self.grid[y][x].west = 0
             self.grid[y][x - 1].east = 0
 
-    def generate(self):
+    def tree_generate(self):
         for y, row in enumerate(self.grid):
             for x, cell in enumerate(row):
                 possible_directions : list[str] = []
@@ -37,6 +37,39 @@ class MazeGenerator():
                 if possible_directions:
                     direction = random.choice(possible_directions)
                     self.break_wall(x, y, direction)
+    
+    def aldous_generate(self):
+        y, x = (0, 0)
+        self.grid[y][x].visited = True
+        while True:
+            directions = check_position(y, x, self.height, self.width)
+            where = random.choice(directions)
+            if where == "e":
+                x += 1
+                if self.grid[y][x].visited == False: 
+                    self.grid[y][x].visited = True
+                    self.grid[y][x].west = 0
+                    self.grid[y][x - 1].east = 0
+            if where == "w":
+                x -= 1
+                if self.grid[y][x].visited == False: 
+                    self.grid[y][x].visited = True
+                    self.grid[y][x].east = 0
+                    self.grid[y][x + 1].west = 0
+            if where == "n":
+                y -= 1
+                if self.grid[y][x].visited == False: 
+                    self.grid[y][x].visited = True
+                    self.grid[y][x].south = 0
+                    self.grid[y + 1][x].north = 0
+            if where == "s":
+                y += 1
+                if self.grid[y][x].visited == False: 
+                    self.grid[y][x].visited = True
+                    self.grid[y][x].north = 0
+                    self.grid[y - 1][x].south = 0
+            if check_grid(self.grid) is True:
+                break
 
     def braid(self):
         for y, row in enumerate(self.grid):
@@ -93,7 +126,52 @@ class MazeGenerator():
         path.append(start_coords)
         path.reverse()
         return (path)
-  
+    
+    def directions_path(self, start_coords, end_coords):
+        path = self.find_path(start_coords, end_coords)
+        directions = []
+        for index, i in enumerate(path):
+            if index == len(path) - 1:
+                break
+            c_y, c_x = path[index]
+            n_y, n_x = path[index + 1]
+            if c_y > n_y and c_x == n_x:
+                directions.append("N")
+            elif c_y < n_y and c_x == n_x:
+                directions.append("S")
+            elif c_y == n_y and c_x > n_x:
+                directions.append("W")
+            elif c_y == n_y and c_x < n_x:
+                directions.append("E")
+            
+        with open("output.txt", "a") as fd:
+            y, x = start_coords
+            a, b = end_coords
+            clean_directions = "".join(directions)
+            fd.write(f"{str(y)},{str(x)}\n")
+            fd.write(f"{str(a)},{str(b)}\n")
+            fd.write(str(clean_directions))
+
+    def hexa_converter(self):
+        with open("output.txt", "w") as fd:
+            for index,row in enumerate(self.grid):
+                hex_list = []
+                for cell in row:
+                    lst = []
+                    binary = ""
+                    lst.append(str(cell.west))
+                    lst.append(str(cell.south))
+                    lst.append(str(cell.east))
+                    lst.append(str(cell.north))
+                    binary = "".join(lst)
+                    decimal = int(binary, 2)
+                    hexadecimal = hex(decimal)[2:].upper()
+                    hex_list.append(hexadecimal)
+                line = "".join(hex_list)
+                if index == self.height - 1:
+                    fd.write(f"{line}\n\n")
+                else:
+                    fd.write(f"{line}\n")
 
 
 

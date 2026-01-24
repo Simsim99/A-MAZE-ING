@@ -4,26 +4,33 @@ class Cell(BaseModel):
     south: int = 1
     west: int = 1
     east: int = 1
-    # visited: bool = False
-    # distance: int = -1
+    visited: bool = False
 
-def hexa_converter(maze):
-    with open("output.txt", "w") as fd:
-        for index,row in enumerate(maze):
-            hex_list = []
-            for cell in row:
-                lst = []
-                binary = ""
-                lst.append(str(cell.west))
-                lst.append(str(cell.south))
-                lst.append(str(cell.east))
-                lst.append(str(cell.north))
-                binary = "".join(lst)
-                decimal = int(binary, 2)
-                hexadecimal = hex(decimal)[2:].upper()
-                hex_list.append(hexadecimal)
-            line = "".join(hex_list)
-            if index == hight - 1:
-                fd.write(f"{line}")
-            else:
-                fd.write(f"{line}\n")
+
+def check_position(y: int, x: int, height: int, width: int) -> list:
+    diractions = ["e", "n", "s", "w"]
+    if x == width - 1 and y == 0:
+        diractions = ["s", "w"]
+    elif x == 0 and y == 0:
+        diractions = ["e", "s"]
+    elif x == 0 and y == height - 1:
+        diractions = ["n", "e"]
+    elif x == width - 1 and y == height - 1:
+        diractions = ["n", "w"]
+    elif x == width - 1:
+        diractions = ["n", "s", "w"]
+    elif x == 0:
+        diractions = ["n", "s", "e"]
+    elif y == 0:
+        diractions = ["s", "e", "w"]
+    elif y == height - 1:
+        diractions = ["n", "e", "w"]
+    return(diractions)
+
+def check_grid(grid):
+    for row in grid:
+        for cell in row:
+            if cell.visited == False:
+                return (False)
+    return (True)
+
