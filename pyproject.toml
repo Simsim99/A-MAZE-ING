@@ -1,11 +1,12 @@
 [project]
-name = "a-maze-ing"
-version = "0.1.0"
-description = ""
+name = "mazegen"
+version = "1.0.0"
+description = "maze generator built with curses"
 authors = [
-    {name = "Your Name",email = "you@example.com"}
+    { name = "Oussama Chouira", email = "ouchouir@example.com" },
+    { name = "Reda Elouanass", email = "rel-ouan@example.com" }
 ]
-package-mode = false
+packages = [{include = "mazegen"}]
 requires-python = ">=3.13"
 dependencies = [
     "pydantic (>=2.12.5,<3.0.0)",

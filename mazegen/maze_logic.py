@@ -1,5 +1,5 @@
 from collections import deque
-from models import Cell, check_position, check_grid
+from mazegen.models import Cell, check_position, check_grid, check_coordinates
 import random
 
 
@@ -14,17 +14,23 @@ class MazeGenerator():
 
     def break_wall(self, x, y, direction: str):
         if direction == "north":
-            self.grid[y][x].north = 0
-            self.grid[y - 1][x].south = 0 
+            if check_coordinates(y - 1, x, self.width, self.height):
+                self.grid[y][x].north = 0
+                self.grid[y - 1][x].south = 0 
         elif direction == "east":
-            self.grid[y][x].east = 0
-            self.grid[y][x + 1].west = 0
+            if check_coordinates(y, x + 1, self.width, self.height):
+                self.grid[y][x].east = 0
+                self.grid[y][x + 1].west = 0
         elif direction == "south":
-            self.grid[y][x].south = 0
-            self.grid[y + 1][x].north = 0
+            if check_coordinates(y + 1, x, self.width, self.height):
+                self.grid[y][x].south = 0
+                self.grid[y + 1][x].north = 0
         elif direction == "west":
-            self.grid[y][x].west = 0
-            self.grid[y][x - 1].east = 0
+            if check_coordinates(y, x - 1, self.width, self.height):
+                self.grid[y][x].west = 0
+                self.grid[y][x - 1].east = 0
+        else:
+            pass
 
     def tree_generate(self):
         for y, row in enumerate(self.grid):
@@ -34,9 +40,31 @@ class MazeGenerator():
                     possible_directions.append("north")
                 if x < self.width - 1:
                     possible_directions.append("east")
-                if possible_directions:
+                if possible_directions and self.grid[y][x].visited == False:
                     direction = random.choice(possible_directions)
                     self.break_wall(x, y, direction)
+    
+
+    # def tree_generate(self):
+    #     for y, row in enumerate(self.grid):
+    #         for x, cell in enumerate(row):
+    #             if y == 0 and x == self.width - 1 and cell.visited is False:
+    #                     cell.last = 1
+    #             elif x == self.width - 1 and cell.visited is False:
+    #                 cell.north = 0
+    #                 self.grid[y - 1][x].south = 0
+    #             elif y == 0 and cell.visited is False:
+    #                 cell.east = 0
+    #                 self.grid[y][x + 1].west = 0
+    #             elif cell.visited is False:
+    #                 # random.seed(123347)
+    #                 flip_coin = random.choice([0, 1])
+    #                 if flip_coin == 0:
+    #                     cell.north = 0
+    #                     self.grid[y - 1][x].south = 0
+    #                 elif flip_coin == 1:
+    #                     cell.east = 0
+    #                     self.grid[y][x + 1].west = 0
     
     def aldous_generate(self):
         y, x = (0, 0)
@@ -46,25 +74,37 @@ class MazeGenerator():
             where = random.choice(directions)
             if where == "e":
                 x += 1
-                if self.grid[y][x].visited == False: 
+                if not check_coordinates(y, x, self.width, self.height):
+                    x -= 1
+                    pass
+                elif self.grid[y][x].visited == False: 
                     self.grid[y][x].visited = True
                     self.grid[y][x].west = 0
                     self.grid[y][x - 1].east = 0
-            if where == "w":
+            elif where == "w":
                 x -= 1
-                if self.grid[y][x].visited == False: 
+                if not check_coordinates(y, x, self.width, self.height):
+                    x += 1
+                    pass
+                elif self.grid[y][x].visited == False: 
                     self.grid[y][x].visited = True
                     self.grid[y][x].east = 0
                     self.grid[y][x + 1].west = 0
-            if where == "n":
+            elif where == "n":
                 y -= 1
-                if self.grid[y][x].visited == False: 
+                if not check_coordinates(y, x, self.width, self.height):
+                    y += 1
+                    pass
+                elif self.grid[y][x].visited == False: 
                     self.grid[y][x].visited = True
                     self.grid[y][x].south = 0
                     self.grid[y + 1][x].north = 0
-            if where == "s":
+            elif where == "s":
                 y += 1
-                if self.grid[y][x].visited == False: 
+                if not check_coordinates(y, x, self.width, self.height):
+                    y -= 1
+                    pass
+                elif self.grid[y][x].visited == False: 
                     self.grid[y][x].visited = True
                     self.grid[y][x].north = 0
                     self.grid[y - 1][x].south = 0
@@ -75,21 +115,24 @@ class MazeGenerator():
         for y, row in enumerate(self.grid):
             for x, cell in enumerate(row):
                 standing_walls = []
-                if cell.north == 1:
-                    if y > 0:
-                        standing_walls.append("north")
-                if cell.south ==1:
-                    if y < self.height - 1:
-                        standing_walls.append("south")
-                if cell.east == 1:
-                    if x < self.width - 1:
-                        standing_walls.append("east")
-                if cell.west == 1:
-                    if x > 0:
-                        standing_walls.append("west")
-                if len(standing_walls) == 3:
-                    direction = random.choice(standing_walls)
-                    self.break_wall(x, y ,direction)
+                if not check_coordinates(y, x, self.width, self.height):
+                    pass
+                else:
+                    if cell.north == 1:
+                        if y > 0:
+                            standing_walls.append("north")
+                    if cell.south ==1:
+                        if y < self.height - 1:
+                            standing_walls.append("south")
+                    if cell.east == 1:
+                        if x < self.width - 1:
+                            standing_walls.append("east")
+                    if cell.west == 1:
+                        if x > 0:
+                            standing_walls.append("west")
+                    if len(standing_walls) == 3:
+                        direction = random.choice(standing_walls)
+                        self.break_wall(x, y ,direction)
 
     def get_neighbors(self, x, y):
         cord_list = []
