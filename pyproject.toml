@@ -6,6 +6,7 @@ authors = [
     { name = "Oussama Chouira", email = "ouchouir@example.com" },
     { name = "Reda Elouanass", email = "rel-ouan@example.com" }
 ]
+readme = "README.md"
 packages = [{include = "mazegen"}]
 requires-python = ">=3.13"
 dependencies = [

@@ -1,4 +1,4 @@
-from mazegen.maze_logic import MazeGenerator
+from maze_logic import MazeGenerator
 import curses
 from curses import wrapper
 import random
@@ -36,7 +36,7 @@ def draw_screen(stdscr, maze):
 #         stdscr.attroff(curses.color_pair(1))
 #         stdscr.refresh()
 #         curses.napms(95)
-def  animate_path(stdscr,path_list):
+def  animate_path(stdscr, path_list, double_color: str, single_color):
     for index, tuple in enumerate(path_list):
         if index == len(path_list) - 1:
             break
@@ -48,18 +48,21 @@ def  animate_path(stdscr,path_list):
         if index == 0:
             pass
         else:    
-            stdscr.addstr(screen_y, screen_x, "██")
+            stdscr.addstr(screen_y, screen_x, double_color)
         if next_x > x:
-            stdscr.addstr((next_y * 2) + 1, (next_x * 3), "█")
+            stdscr.addstr((next_y * 2) + 1, (next_x * 3), single_color)
         elif next_x < x:
-            stdscr.addstr((next_y * 2) + 1, (next_x * 3) + 3, "█")
+            stdscr.addstr((next_y * 2) + 1, (next_x * 3) + 3, single_color)
         elif next_y > y:
-            stdscr.addstr((y  * 2) + 2, (x * 3) + 1, "██")
+            stdscr.addstr((y  * 2) + 2, (x * 3) + 1, double_color)
         elif next_y < y:
-            stdscr.addstr((y * 2), (x * 3) + 1, "██")
+            stdscr.addstr((y * 2), (x * 3) + 1, double_color)
         stdscr.attroff(curses.color_pair(4))
         stdscr.refresh()
-        time.sleep(0.1)
+        if double_color == "  ":
+            time.sleep(0.01)
+        else:
+            time.sleep(0.1)
 
 def handle_generation(maze_object, is_perfect, start_coords, end_coords, algo_gen):
     if algo_gen == "tree":
@@ -139,7 +142,6 @@ def main(stdscr):
             path_shown = False
             stdscr.clear()
             new_maze = MazeGenerator(int(my_dict['WIDTH']), int(my_dict[('HEIGHT')]))
-            
             path = handle_generation(new_maze, is_perfect, entry_tuple, exit_tuple, my_dict['GEN_ALGO'])
             new_maze.hexa_converter()
             new_maze.directions_path(entry_tuple, exit_tuple)
@@ -151,7 +153,6 @@ def main(stdscr):
             stdscr.attron(curses.color_pair(2))
             stdscr.addstr(screen_y, screen_x, "██")
             stdscr.attroff(curses.color_pair(2))
-
             y, x = path[-1]
             screen_y = (y * 2) + 1
             screen_x = (x * 3) + 1
@@ -165,54 +166,18 @@ def main(stdscr):
             stdscr.addstr((int(my_dict[('HEIGHT')]) * 2) + 6, 0, "4. Quit")
             stdscr.addstr((int(my_dict[('HEIGHT')]) * 2) + 7, 0, "5. Choice? (1-4): ")
             curses.curs_set(2)
-
             stdscr.refresh()
-            
         elif key == ord('2'):
-            # curses.curs_set(0)
-            # if path_shown == False:
-            #     animate_path(stdscr, path)
-            #     path_shown = True
-            # else:
-            #     for y, x in path[1:-1]:
-            #         screen_y = (y * 2) + 1
-            #         screen_x = (x * 3) + 1
-            #         stdscr.addstr(screen_y, screen_x, "  ")
-            #         path_shown = False
-            #     stdscr.refresh()
-            # stdscr.move((int(my_dict[('HEIGHT')]) * 2) + 7, 18)
-            # curses.curs_set(2)
             curses.curs_set(0)
             if path_shown == False:
-                animate_path(stdscr, path)
+                animate_path(stdscr, path,"██", "█")
                 path_shown = True
             else:
-                for index, tup in enumerate(path):
-                    if index == len(path) - 1:
-                        break
-                    y, x = tup
-                    screen_y = (y * 2) + 1
-                    screen_x = (x * 3) + 1
-                    next_y, next_x = path[index + 1]
-                    stdscr.attron(curses.color_pair(1))
-                    if index == 0:
-                        pass
-                    else:    
-                        stdscr.addstr(screen_y, screen_x, "  ")
-                    if next_x > x:
-                        stdscr.addstr((next_y * 2) + 1, (next_x * 3), " ")
-                    elif next_x < x:
-                        stdscr.addstr((next_y * 2) + 1, (next_x * 3) + 3, " ")
-                    elif next_y > y:
-                        stdscr.addstr((y  * 2) + 2, (x * 3) + 1, "  ")
-                    elif next_y < y:
-                        stdscr.addstr((y * 2), (x * 3) + 1, "  ")
-                    stdscr.attroff(curses.color_pair(1))
-                    stdscr.refresh()
-                    time.sleep(0.01)
-                    path_shown = False
-            stdscr.move((int(my_dict[('HEIGHT')]) * 2) + 7, 18)
-            curses.curs_set(2)
+                animate_path(stdscr, path,"  ", " ")
+                stdscr.refresh()
+                path_shown = False
+                stdscr.move((int(my_dict[('HEIGHT')]) * 2) + 7, 18)
+                curses.curs_set(2)
         elif key == ord('3'):
             stdscr.move((int(my_dict[('HEIGHT')]) * 2) + 7, 18)
             curses.curs_set(2)

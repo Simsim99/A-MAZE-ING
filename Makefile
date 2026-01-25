@@ -32,3 +32,5 @@ lint:
 lint-strict:
 		poetry run flake8 .
 		poetry run mypy . --strict
+
+# test:

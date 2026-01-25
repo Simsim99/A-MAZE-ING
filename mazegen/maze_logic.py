@@ -1,5 +1,5 @@
 from collections import deque
-from mazegen.models import Cell, check_position, check_grid, check_coordinates
+from models import Cell, check_position, check_grid, check_coordinates
 import random
 
 
@@ -44,29 +44,11 @@ class MazeGenerator():
                     direction = random.choice(possible_directions)
                     self.break_wall(x, y, direction)
     
-
-    # def tree_generate(self):
-    #     for y, row in enumerate(self.grid):
-    #         for x, cell in enumerate(row):
-    #             if y == 0 and x == self.width - 1 and cell.visited is False:
-    #                     cell.last = 1
-    #             elif x == self.width - 1 and cell.visited is False:
-    #                 cell.north = 0
-    #                 self.grid[y - 1][x].south = 0
-    #             elif y == 0 and cell.visited is False:
-    #                 cell.east = 0
-    #                 self.grid[y][x + 1].west = 0
-    #             elif cell.visited is False:
-    #                 # random.seed(123347)
-    #                 flip_coin = random.choice([0, 1])
-    #                 if flip_coin == 0:
-    #                     cell.north = 0
-    #                     self.grid[y - 1][x].south = 0
-    #                 elif flip_coin == 1:
-    #                     cell.east = 0
-    #                     self.grid[y][x + 1].west = 0
     
     def aldous_generate(self):
+        # random.seed(1)This algorithm is based on a "random walk." It picks a random neighbor; if the neighbor has not been visited, it carves a path and moves there. If it has been visited, it simply moves there without carving.
+
+Rationale: We chose this because it produces a Uniform Spanning Tree, meaning it has no bias. The resulting mazes are more organic and difficult to solve than the Binary Tree, showcasing the flexibility of our generation logic.
         y, x = (0, 0)
         self.grid[y][x].visited = True
         while True:
@@ -187,7 +169,7 @@ class MazeGenerator():
             elif c_y == n_y and c_x < n_x:
                 directions.append("E")
             
-        with open("output.txt", "a") as fd:
+        with open("maze.txt", "a") as fd:
             y, x = start_coords
             a, b = end_coords
             clean_directions = "".join(directions)
@@ -196,7 +178,7 @@ class MazeGenerator():
             fd.write(str(clean_directions))
 
     def hexa_converter(self):
-        with open("output.txt", "w") as fd:
+        with open("maze.txt", "w") as fd:
             for index,row in enumerate(self.grid):
                 hex_list = []
                 for cell in row:
