@@ -1,9 +1,9 @@
 from collections import deque
-from models import Cell, check_position, check_grid, check_coordinates
+from mazegen.models import Cell, check_position, check_grid, check_coordinates
 import random
 
 
-class MazeGenerator():
+class MazeGenerator:
     def __init__(self, width, height):
         self.width = width
         self.height = height
@@ -16,7 +16,7 @@ class MazeGenerator():
         if direction == "north":
             if check_coordinates(y - 1, x, self.width, self.height):
                 self.grid[y][x].north = 0
-                self.grid[y - 1][x].south = 0 
+                self.grid[y - 1][x].south = 0
         elif direction == "east":
             if check_coordinates(y, x + 1, self.width, self.height):
                 self.grid[y][x].east = 0
@@ -32,23 +32,21 @@ class MazeGenerator():
         else:
             pass
 
-    def tree_generate(self):
+    def tree_generate(self, the_seed):
+        random.seed(the_seed)
         for y, row in enumerate(self.grid):
             for x, cell in enumerate(row):
-                possible_directions : list[str] = []
+                possible_directions: list[str] = []
                 if y > 0:
                     possible_directions.append("north")
                 if x < self.width - 1:
                     possible_directions.append("east")
-                if possible_directions and self.grid[y][x].visited == False:
+                if possible_directions and self.grid[y][x].visited is False:
                     direction = random.choice(possible_directions)
                     self.break_wall(x, y, direction)
-    
-    
-    def aldous_generate(self):
-        # random.seed(1)This algorithm is based on a "random walk." It picks a random neighbor; if the neighbor has not been visited, it carves a path and moves there. If it has been visited, it simply moves there without carving.
 
-Rationale: We chose this because it produces a Uniform Spanning Tree, meaning it has no bias. The resulting mazes are more organic and difficult to solve than the Binary Tree, showcasing the flexibility of our generation logic.
+    def aldous_generate(self, the_seed):
+        random.seed(the_seed)
         y, x = (0, 0)
         self.grid[y][x].visited = True
         while True:
@@ -59,7 +57,7 @@ Rationale: We chose this because it produces a Uniform Spanning Tree, meaning it
                 if not check_coordinates(y, x, self.width, self.height):
                     x -= 1
                     pass
-                elif self.grid[y][x].visited == False: 
+                elif self.grid[y][x].visited is False:
                     self.grid[y][x].visited = True
                     self.grid[y][x].west = 0
                     self.grid[y][x - 1].east = 0
@@ -68,7 +66,7 @@ Rationale: We chose this because it produces a Uniform Spanning Tree, meaning it
                 if not check_coordinates(y, x, self.width, self.height):
                     x += 1
                     pass
-                elif self.grid[y][x].visited == False: 
+                elif self.grid[y][x].visited is False:
                     self.grid[y][x].visited = True
                     self.grid[y][x].east = 0
                     self.grid[y][x + 1].west = 0
@@ -77,7 +75,7 @@ Rationale: We chose this because it produces a Uniform Spanning Tree, meaning it
                 if not check_coordinates(y, x, self.width, self.height):
                     y += 1
                     pass
-                elif self.grid[y][x].visited == False: 
+                elif self.grid[y][x].visited is False:
                     self.grid[y][x].visited = True
                     self.grid[y][x].south = 0
                     self.grid[y + 1][x].north = 0
@@ -86,14 +84,14 @@ Rationale: We chose this because it produces a Uniform Spanning Tree, meaning it
                 if not check_coordinates(y, x, self.width, self.height):
                     y -= 1
                     pass
-                elif self.grid[y][x].visited == False: 
+                elif self.grid[y][x].visited is False:
                     self.grid[y][x].visited = True
                     self.grid[y][x].north = 0
                     self.grid[y - 1][x].south = 0
             if check_grid(self.grid) is True:
                 break
 
-    def braid(self):
+    def braid(self, the_seed):
         for y, row in enumerate(self.grid):
             for x, cell in enumerate(row):
                 standing_walls = []
@@ -103,7 +101,7 @@ Rationale: We chose this because it produces a Uniform Spanning Tree, meaning it
                     if cell.north == 1:
                         if y > 0:
                             standing_walls.append("north")
-                    if cell.south ==1:
+                    if cell.south == 1:
                         if y < self.height - 1:
                             standing_walls.append("south")
                     if cell.east == 1:
@@ -114,7 +112,7 @@ Rationale: We chose this because it produces a Uniform Spanning Tree, meaning it
                             standing_walls.append("west")
                     if len(standing_walls) == 3:
                         direction = random.choice(standing_walls)
-                        self.break_wall(x, y ,direction)
+                        self.break_wall(x, y, direction)
 
     def get_neighbors(self, x, y):
         cord_list = []
@@ -122,11 +120,11 @@ Rationale: We chose this because it produces a Uniform Spanning Tree, meaning it
             cord_list.append((y - 1, x))
         if x > 0 and self.grid[y][x].west == 0:
             cord_list.append((y, x - 1))
-        if y < self.height- 1 and self.grid[y][x].south == 0:
+        if y < self.height - 1 and self.grid[y][x].south == 0:
             cord_list.append((y + 1, x))
-        if x < self.width- 1 and self.grid[y][x].east == 0:
+        if x < self.width - 1 and self.grid[y][x].east == 0:
             cord_list.append((y, x + 1))
-        return (cord_list)
+        return cord_list
 
     def find_path(self, start_coords, end_coords):
         queue = [start_coords]
@@ -137,12 +135,12 @@ Rationale: We chose this because it produces a Uniform Spanning Tree, meaning it
             if current == end_coords:
                 break
             y, x = current
-            neighbors_list = (self.get_neighbors(x, y))
+            neighbors_list = self.get_neighbors(x, y)
             for i in neighbors_list:
                 if i not in visited:
                     visited.add(i)
                     queue.append(i)
-                    parent_map[i]= current
+                    parent_map[i] = current
         path = []
         step = end_coords
         while step in parent_map:
@@ -150,9 +148,9 @@ Rationale: We chose this because it produces a Uniform Spanning Tree, meaning it
             step = parent_map[step]
         path.append(start_coords)
         path.reverse()
-        return (path)
-    
-    def directions_path(self, start_coords, end_coords):
+        return path
+
+    def directions_path(self, start_coords, end_coords, file_name):
         path = self.find_path(start_coords, end_coords)
         directions = []
         for index, i in enumerate(path):
@@ -168,8 +166,8 @@ Rationale: We chose this because it produces a Uniform Spanning Tree, meaning it
                 directions.append("W")
             elif c_y == n_y and c_x < n_x:
                 directions.append("E")
-            
-        with open("maze.txt", "a") as fd:
+
+        with open(file_name, "a") as fd:
             y, x = start_coords
             a, b = end_coords
             clean_directions = "".join(directions)
@@ -177,9 +175,9 @@ Rationale: We chose this because it produces a Uniform Spanning Tree, meaning it
             fd.write(f"{str(a)},{str(b)}\n")
             fd.write(str(clean_directions))
 
-    def hexa_converter(self):
-        with open("maze.txt", "w") as fd:
-            for index,row in enumerate(self.grid):
+    def hexa_converter(self, file_name):
+        with open(file_name, "w") as fd:
+            for index, row in enumerate(self.grid):
                 hex_list = []
                 for cell in row:
                     lst = []
@@ -197,6 +195,3 @@ Rationale: We chose this because it produces a Uniform Spanning Tree, meaning it
                     fd.write(f"{line}\n\n")
                 else:
                     fd.write(f"{line}\n")
-
-
-

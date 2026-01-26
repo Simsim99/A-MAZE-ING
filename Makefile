@@ -1,13 +1,13 @@
 PYTHON = python3
 
-.PHONY:	run clean test debug liny lint-strict build
+.PHONY:	run clean debug liny lint-strict build
 
 install:
 		pip install poetry
 		poetry install
 
 run:
-		poetry run $(PYTHON) mazegen/a_maze_ing.py
+		poetry run $(PYTHON) a_maze_ing.py
 
 build:
 		poetry build
@@ -21,8 +21,6 @@ clean:
 		poetry env remove --all
 		rm -rf dist/
 		-rm poetry.lock
-		-rm mazegen-*.whl
-		-rm mazegen-*.tar.gz
 		find . -type d -name "__pycache__" -exec rm -rf {} +
 		find . -type d -name ".mypy_cache" -exec rm -rf {} +
 
@@ -32,5 +30,3 @@ lint:
 lint-strict:
 		poetry run flake8 .
 		poetry run mypy . --strict
-
-# test:
