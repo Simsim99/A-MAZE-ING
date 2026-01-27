@@ -71,13 +71,17 @@ GEN_ALGO=aldous
     ```
 ### Creates a brand new file anywhere on the computer then write:
     ```Python
-    from mazegen.a_maze_ing import main
+    from mazegen.maze_logic import MazeGenerator
+    width = 10
+    height = 15
 
-    wrapper(main)
+    gen = MazeGenerator(height, width)
+    data = gen.aldous_generate("None")
+    print(f"Successfully generated a maze with {height} rows.")
     ```
 ### Run:
     '''bash
-    python3 file_name.py read_from_file_for_data.txt
+    python3 file_name.py
     '''
 * we used two algorithms, each one can create a perfect maze
 ## 1-Binary Tree algorithm:
@@ -92,15 +96,6 @@ We chose this because it produces a Uniform Spanning Tree, meaning it has no bia
 
 ## Reusability:
 While the entire mazegen package is installable, the core reusability lies within the MazeGenerator class in maze_logic.py. This component is UI-agnostic, meaning it generates the maze structure as a data object without dependencies on the curses library. This allows other developers to import our generation algorithm into any Python environment
-
-```Python
-from mazegen.maze_logic import MazeGenerator
-
-gen = MazeGenerator(10, 10)
-data = gen.generate()
-
-print(f"Successfully generated a maze with {len(data)} rows.")
-```
 
 ## Team & Project Management:
 ### Roles

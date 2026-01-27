@@ -1,5 +1,5 @@
 from collections import deque
-from mazegen.models import Cell, check_position, check_grid, check_coordinates
+from mazegen.models import Cell, check_position, check_coordinates
 import random
 
 
@@ -49,6 +49,7 @@ class MazeGenerator:
         random.seed(the_seed)
         y, x = (0, 0)
         self.grid[y][x].visited = True
+        count = 19
         while True:
             directions = check_position(y, x, self.height, self.width)
             where = random.choice(directions)
@@ -59,6 +60,7 @@ class MazeGenerator:
                     pass
                 elif self.grid[y][x].visited is False:
                     self.grid[y][x].visited = True
+                    count += 1
                     self.grid[y][x].west = 0
                     self.grid[y][x - 1].east = 0
             elif where == "w":
@@ -68,6 +70,7 @@ class MazeGenerator:
                     pass
                 elif self.grid[y][x].visited is False:
                     self.grid[y][x].visited = True
+                    count += 1
                     self.grid[y][x].east = 0
                     self.grid[y][x + 1].west = 0
             elif where == "n":
@@ -77,6 +80,7 @@ class MazeGenerator:
                     pass
                 elif self.grid[y][x].visited is False:
                     self.grid[y][x].visited = True
+                    count += 1
                     self.grid[y][x].south = 0
                     self.grid[y + 1][x].north = 0
             elif where == "s":
@@ -86,9 +90,10 @@ class MazeGenerator:
                     pass
                 elif self.grid[y][x].visited is False:
                     self.grid[y][x].visited = True
+                    count += 1
                     self.grid[y][x].north = 0
                     self.grid[y - 1][x].south = 0
-            if check_grid(self.grid) is True:
+            if count == self.width * self.height:
                 break
 
     def braid(self, the_seed):

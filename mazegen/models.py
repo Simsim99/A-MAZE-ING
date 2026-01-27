@@ -195,4 +195,3 @@ def draw_42(maze, stdscr):
         stdscr.addstr((y * 2) + 1, (x * 3) + 1, "██")
         stdscr.attroff(curses.color_pair(11))
         stdscr.refresh()
-        # time.sleep(0.000)

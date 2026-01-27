@@ -1,23 +1,35 @@
 from mazegen.maze_logic import MazeGenerator
+from typing import List, Dict, Tuple, Optional, Union, Deque, window
 import curses
 from curses import wrapper
 import random
 import time
+from collections import deque
 from mazegen.models import (
     include_42_aldous,
     include_42_tree,
     draw_42,
     check_coordinates,
+    Cell,
 )
 
 
-def draw_screen(stdscr, maze):
-    stdscr.clear()
-    for y, row in enumerate(maze.grid):
+def draw_screen(stdscr: window, maze: MazeGenerator, is_animated: bool)-> None:
+    """Renders the maze grid onto the curses screen.
+
+    Args:
+        stdscr: The curses window object.
+        maze (MazeGenerator): The maze object containing grid data.
+        is_animated (bool): If True, draws the maze cell-by-cell with a delay.
+    """
+    before: Deque[Deque[Cell]] = deque(
+        deque(Cell() for _ in range(maze.width)) for _ in range(maze.height)
+        )
+    for y, row in enumerate(before):
         for x, cell in enumerate(row):
             screen_y = y * 2
             screen_x = x * 3
-            stdscr.attron(curses.color_pair(3))
+            stdscr.attron(curses.color_pair(2))
             stdscr.addstr(screen_y, screen_x, "█")
             if cell.north == 1:
                 stdscr.addstr(screen_y, screen_x + 1, "███")
@@ -30,12 +42,41 @@ def draw_screen(stdscr, maze):
                 stdscr.addstr((y + 1) * 2, screen_x, "████")
                 if x == maze.width - 1:
                     stdscr.addstr((y + 1) * 2, (x + 1) * 3, "█")
-            # time.sleep(0.01)
+    for y, row in enumerate(maze.grid):
+        for x, cell in enumerate(row):
+            screen_y = y * 2
+            screen_x = x * 3
+            stdscr.addstr(screen_y, screen_x, "█")
+            if cell.north == 0:
+                stdscr.addstr(screen_y, screen_x + 1, "   ")
+            if cell.west == 0:
+                stdscr.addstr(screen_y + 1, screen_x, " ")
+            if x == maze.width - 1:
+                stdscr.addstr(screen_y + 1, (x + 1) * 3, "█")
+                stdscr.addstr(screen_y, (x + 1) * 3, "█")
+            if y == maze.height - 1:
+                stdscr.addstr((y + 1) * 2, screen_x, "████")
+                if x == maze.width - 1:
+                    stdscr.addstr((y + 1) * 2, (x + 1) * 3, "█")
+            if is_animated is True:
+                time.sleep(0.01)
             stdscr.refresh()
-    stdscr.attroff(curses.color_pair(3))
+    stdscr.attroff(curses.color_pair(2))
 
 
-def animate_path(stdscr, path_list, double_color: str, single_color):
+def animate_path(stdscr: window,
+                 path_list: List[Tuple[int, int]],
+                 double_color: str,
+                 single_color: str
+                 ) -> None:
+    """Animates the solution path or clears it from the screen.
+
+    Args:
+        stdscr (window): The curses window object.
+        path_list (List[Tuple[int, int]]): Coordinates of the solution path.
+        double_color (str): The string to use for 2-character wide blocks.
+        single_color (str): The string to use for 1-character wide blocks.
+    """
     for index, tuple in enumerate(path_list):
         if index == len(path_list) - 1:
             break
@@ -65,8 +106,26 @@ def animate_path(stdscr, path_list, double_color: str, single_color):
 
 
 def handle_generation(
-    maze_object, is_perfect, start_coords, end_coords, algo_gen, the_seed
-):
+    maze_object: MazeGenerator,
+    is_perfect: bool,
+    start_coords: Tuple[int, int],
+    end_coords: Tuple[int, int],
+    algo_gen: str, 
+    the_seed: Optional[str] 
+) -> List[Tuple[int, int]]:
+    """Handles the algorithmic generation and solving of the maze.
+
+    Args:
+        maze_object (MazeGenerator): The object to generate the maze in.
+        is_perfect (bool): Whether the maze should be perfect (no loops).
+        start_coords (Tuple[int, int]): Entry (y, x).
+        end_coords (Tuple[int, int]): Exit (y, x).
+        algo_gen (str): The algorithm name ('tree' or 'aldous').
+        the_seed (Optional[str]): The seed for random generation.
+
+    Returns:
+        List[Tuple[int, int]]: The calculated path from start to end.
+    """
     if algo_gen == "tree":
         include_42_tree(maze_object)
         maze_object.tree_generate(the_seed)
@@ -80,25 +139,11 @@ def handle_generation(
         )
     if is_perfect is False:
         maze_object.braid(the_seed)
-    path = maze_object.find_path(start_coords, end_coords)
+    path: List[Tuple[int, int]] = maze_object.find_path(start_coords, end_coords)
     return path
 
 
-def draw_all(stdscr, path, maze, my_dict):
-    draw_screen(stdscr, maze)
-    draw_42(maze, stdscr)
-    y, x = path[0]
-    screen_y = (y * 2) + 1
-    screen_x = (x * 3) + 1
-    stdscr.attron(curses.color_pair(2))
-    stdscr.addstr(screen_y, screen_x, "██")
-    stdscr.attroff(curses.color_pair(2))
-    y, x = path[-1]
-    screen_y = (y * 2) + 1
-    screen_x = (x * 3) + 1
-    stdscr.attron(curses.color_pair(1))
-    stdscr.addstr(screen_y, screen_x, "██")
-    stdscr.attroff(curses.color_pair(1))
+def draw_all(stdscr, path, maze, my_dict, is_animated):
     stdscr.addstr((int(my_dict[("HEIGHT")]) * 2) + 2, 0, "=== A-Maze-ing ===")
     stdscr.addstr(
         (int(my_dict[("HEIGHT")]) * 2) + 3, 0, "1. Re-generate a new maze"
@@ -113,6 +158,24 @@ def draw_all(stdscr, path, maze, my_dict):
         )
     stdscr.addstr((int(my_dict[("HEIGHT")]) * 2) + 6, 0, "4. Quit")
     stdscr.addstr((int(my_dict[("HEIGHT")]) * 2) + 7, 0, "5. Choice? (1-4): ")
+    draw_screen(stdscr, maze, is_animated)
+    draw_42(maze, stdscr)
+    y, x = path[0]
+    screen_y = (y * 2) + 1
+    screen_x = (x * 3) + 1
+    stdscr.attron(curses.color_pair(6))
+    stdscr.addstr(screen_y, screen_x, "██")
+    stdscr.attroff(curses.color_pair(6))
+    y, x = path[-1]
+    screen_y = (y * 2) + 1
+    screen_x = (x * 3) + 1
+    stdscr.attron(curses.color_pair(3))
+    stdscr.addstr(screen_y, screen_x, "██")
+    stdscr.attroff(curses.color_pair(3))
+    try:
+        stdscr.move((int(my_dict[("HEIGHT")]) * 2) + 7, 18)
+    except curses.error:
+        pass
 
 
 def read_file():
@@ -122,32 +185,43 @@ def read_file():
         for line in file:
             line = line.strip().split("=")
             dictt[line[index]] = line[index + 1]
-    height = int(dictt.get("HEIGHT"))
-    width = int(dictt.get("WIDTH"))
+    height = int(dictt["HEIGHT"])
+    width = int(dictt["WIDTH"])
     y_start, x_start = tuple(int(i) for i in dictt["ENTRY"].split(","))
     y_exit, x_exit = tuple(int(i) for i in dictt["EXIT"].split(","))
     if width < 0:
-        raise Exception(
-            f"❌ Invalid width: {width}. Width must be a positive number."
-            )
+        raise Exception(f"Invalid width: {width}. "
+                        f"Width must be a positive number.")
     elif height < 0:
         raise Exception(
-            f"❌ Invalid height: {height}. Height must be a positive number."
+            f"Invalid height: {height}. Height must be a positive number."
         )
     elif height < 7 or width < 9:
-        raise Exception("❌ ERROR: Maze too small for '42' logo!")
+        raise Exception("ERROR: Maze too small for '42' logo!")
     elif (y_start, x_start) == (y_exit, x_exit):
         raise Exception(
-            "❌ ERROR: Start and exit cannot be at the same position!"
+            "ERROR: Start and exit cannot be at the same position!"
             )
+    elif y_start > height - 1 or x_start > width - 1:
+        raise ValueError("The start can't be outside the Maze !")
+    elif y_start < 0 or x_start < 0:
+        raise ValueError("The start coordinates can't be negative!")
+    elif y_exit > height - 1 or x_exit > width - 1:
+        raise ValueError("The exit can't be outside the Maze !")
+    elif y_exit < 0 or x_exit < 0:
+        raise ValueError("The exit coordinates can't be negative!")
+    elif (y_start, x_start) == (y_exit, x_exit):
+        raise ValueError(
+            "ERROR: Start and exit cannot" "be at the same position!"
+            "")
     elif not check_coordinates(y_start, x_start, width, height):
-        raise Exception(
-            f"❌ ERROR: Start position ({y_start, x_start}) "
+        raise ValueError(
+            f"ERROR: Start position ({y_start, x_start}) "
             f"is inside the '42' logo!"
         )
     elif not check_coordinates(y_exit, x_exit, width, height):
-        raise Exception(
-            f"❌ ERROR: Exit position {y_exit, y_exit} is inside the '42' logo!"
+        raise ValueError(
+            f"ERROR: Exit position {y_exit, x_exit} is inside the '42' logo!"
         )
     return dictt
 
@@ -162,16 +236,27 @@ def main(stdscr):
         raise ValueError("Screen too small for maze!")
     if my_dict["PERFECT"] == "True":
         is_perfect = True
-    else:
+    elif my_dict["PERFECT"] == "False":
         is_perfect = False
+    else:
+        raise ValueError("PERFECT is a Boolean. Expected input:"
+                         " True or False")
     curses.curs_set(0)
     curses.start_color()
     entry_tuple = tuple(int(i) for i in my_dict["ENTRY"].split(","))
     exit_tuple = tuple(int(i) for i in my_dict["EXIT"].split(","))
-    curses.init_pair(1, curses.COLOR_YELLOW, curses.COLOR_BLACK)
-    curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK)
-    curses.init_pair(3, curses.COLOR_RED, curses.COLOR_BLACK)
-    curses.init_pair(4, curses.COLOR_CYAN, curses.COLOR_BLACK)
+    curses.init_color(1, 106, 286, 396)
+    curses.init_color(2, 792, 913, 1000)
+    curses.init_color(3, 1000, 419, 419)
+    curses.init_color(4, 373, 658, 827)
+    curses.init_color(5, 94, 204, 243)
+    curses.init_color(6, 1000, 549, 0)
+    curses.init_pair(1, 1, curses.COLOR_BLACK)
+    curses.init_pair(2, curses.COLOR_WHITE, curses.COLOR_BLACK)
+    curses.init_pair(3, 3, curses.COLOR_BLACK)
+    curses.init_pair(4, 4, curses.COLOR_BLACK)
+    curses.init_pair(5, 5, curses.COLOR_BLACK)
+    curses.init_pair(6, 6, curses.COLOR_BLACK)
     curses.init_color(9, 500, 500, 500)
     curses.init_pair(11, 9, curses.COLOR_BLACK)
     try:
@@ -196,15 +281,11 @@ def main(stdscr):
         )
     maze.hexa_converter(my_dict["OUTPUT_FILE"])
     maze.directions_path(entry_tuple, exit_tuple, my_dict["OUTPUT_FILE"])
-    draw_all(stdscr, path, maze, my_dict)
+    try:
+        draw_all(stdscr, path, maze, my_dict, True)
+    except curses.error:
+        pass
     curses.curs_set(2)
-    my_colors = [
-        curses.COLOR_CYAN,
-        curses.COLOR_GREEN,
-        curses.COLOR_RED,
-        curses.COLOR_YELLOW,
-    ]
-    color_index = 0
     path_shown = False
     while True:
         key = stdscr.getch()
@@ -214,18 +295,26 @@ def main(stdscr):
                 ter_width < (int(my_dict.get("WIDTH")) * 3) + 1
                 or ter_height < (int(my_dict.get("HEIGHT")) * 2) + 8
             ):
-                stdscr.clear()
-                stdscr.addstr(
-                    0, 0, "size of terminal is not enough. "
-                          "Re-adjust to optimal size"
-                )
+                # stdscr.clear()
+                stdscr.erase()
+                try:
+                    stdscr.addstr(
+                        0,
+                        0,
+                        "size of terminal is not enough. "
+                        "Re-adjust to optimal size", curses.COLOR_WHITE
+                    )
+                except curses.error:
+                    pass
             else:
-                stdscr.clear()
-                draw_all(stdscr, path, maze, my_dict)
+                # stdscr.clear()
+                stdscr.erase()
+                draw_all(stdscr, path, maze, my_dict, False)
 
         if key == ord("1"):
             path_shown = False
-            stdscr.clear()
+            # stdscr.clear()
+            stdscr.erase()
             maze = MazeGenerator(
                 int(my_dict["WIDTH"]), int(my_dict[("HEIGHT")])
                 )
@@ -251,39 +340,41 @@ def main(stdscr):
             maze.directions_path(
                 entry_tuple, exit_tuple, my_dict["OUTPUT_FILE"]
                 )
-            draw_all(stdscr, path, maze, my_dict)
+            try:
+                draw_all(stdscr, path, maze, my_dict, True)
+            except curses.error:
+                pass
             curses.curs_set(2)
             stdscr.refresh()
 
         elif key == ord("2"):
-
-            curses.curs_set(0)
-            if path_shown is False:
-                animate_path(stdscr, path, "██", "█")
-                path_shown = True
-            else:
-                animate_path(stdscr, path, "  ", " ")
-                stdscr.refresh()
-                path_shown = False
-                stdscr.move((int(my_dict[("HEIGHT")]) * 2) + 7, 18)
-                curses.curs_set(2)
-
+            try:
+                curses.curs_set(0)
+                if path_shown is False:
+                    animate_path(stdscr, path, "██", "█")
+                    path_shown = True
+                    stdscr.move((int(my_dict[("HEIGHT")]) * 2) + 7, 18)
+                    curses.curs_set(2)
+                else:
+                    animate_path(stdscr, path, "  ", " ")
+                    stdscr.refresh()
+                    path_shown = False
+                    stdscr.move((int(my_dict[("HEIGHT")]) * 2) + 7, 18)
+                    curses.curs_set(2)
+            except curses.error:
+                pass
         elif key == ord("3"):
-
             stdscr.move((int(my_dict[("HEIGHT")]) * 2) + 7, 18)
             curses.curs_set(2)
-            color_index = random.choice([0, 1, 2, 3])
-            curses.init_pair(1, my_colors[color_index], curses.COLOR_BLACK)
-            color_index = random.choice([0, 1, 2, 3])
-            curses.init_pair(2, my_colors[color_index], curses.COLOR_BLACK)
-            color_index = random.choice([0, 1, 2, 3])
-            curses.init_pair(3, my_colors[color_index], curses.COLOR_BLACK)
-            color_index = random.choice([0, 1, 2, 3])
-            curses.init_pair(4, my_colors[color_index], curses.COLOR_BLACK)
+            colors = [1, 6, 4, 3, 2, 5]
+            random.shuffle(colors)
+            curses.init_pair(2, colors[0], curses.COLOR_BLACK)
+            curses.init_pair(4, colors[1], curses.COLOR_BLACK)
+            curses.init_pair(3, colors[2], curses.COLOR_BLACK)
+            curses.init_pair(6, colors[3], curses.COLOR_BLACK)
             stdscr.refresh()
 
         elif key == ord("4"):
-
             break
 
 
@@ -293,26 +384,25 @@ if __name__ == "__main__":
             wrapper(main)
         except NameError as e:
             print(e)
-        except curses.error:
-            print("⚠️ Screen too small for maze!")
-            print("Resize terminal and restart.")
         except FileNotFoundError as e:
             print(
                 f"Please make sure that you provide the file {e.filename} "
                 f"before running your program ⚠️"
             )
-        except TypeError:
-            print("❌ Error: Filename cannot be None!")
+        except TypeError as e:
+            print(e)
         except KeyError as e:
             print(f"Missing key: {e}")
             print(
                 "Keys: WIDTH, HEIGHT, ENTRY, EXIT, OUTPUT_FILE, "
-                "PERFECT are oblegatory!"
+                "PERFECT are obligatory!"
             )
         except Exception as e:
             print(e)
-    except ValueError as e:
-        print(e)
+        except ValueError as e:
+            print(e)
+        except KeyboardInterrupt:
+            print("\nExited A-MAZE-ING. See you next time!")
     except ModuleNotFoundError as e:
         print(e)
     except Exception as e:
