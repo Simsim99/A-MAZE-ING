@@ -9,6 +9,8 @@ packages = [{include = "mazegen"}]
 [tool.poetry.dependencies]
 python = "^3.10"
 pydantic = "^2.10.0"
+flake8 = "^7.0.0"
+mypy = "^1.11.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

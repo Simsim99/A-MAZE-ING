@@ -12,7 +12,6 @@ run:
 build:
 		poetry build
 		cp dist/mazegen-*.whl .
-		cp dist/mazegen-*.tar.gz .
 
 debug:
 		poetry run $(PYTHON) -m pdb a_maze_ing.py
