@@ -273,7 +273,7 @@ def main(stdscr: "curses.window") -> None:
         raise ValueError("Screen too small for maze!")
     if my_dict["PERFECT"].upper() == "TRUE":
         is_perfect = True
-    if my_dict["PERFECT"].upper() == "FALSE":
+    elif my_dict["PERFECT"].upper() == "FALSE":
         is_perfect = False
     else:
         raise ValueError("PERFECT is a Boolean. Expected input:"
@@ -305,9 +305,15 @@ def main(stdscr: "curses.window") -> None:
     curses.init_color(9, 500, 500, 500)
     curses.init_pair(11, 9, curses.COLOR_BLACK)
     try:
-        the_seed: Optional[str] = my_dict["SEED"]
-        if the_seed == "None":
-            the_seed = None
+        temp_seed: Optional[str] = my_dict["SEED"]
+        if temp_seed == "":
+            raise ValueError("SEED must have an value!")
+        the_seed: Optional[str] = None
+        if temp_seed is not None:
+            if temp_seed.upper() == "NONE":
+                the_seed = None
+            else:
+                the_seed = temp_seed
     except KeyError:
         the_seed = None
     maze: MazeGenerator = MazeGenerator(

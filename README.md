@@ -46,43 +46,42 @@ Runs Flake8 and MyPy with standard checks
 make lint-strict
 ```
 Runs MyPy with the --strict flag for maximum type safety.
-* **Install and Import as a Package:** If you have received the .whl file, you can install it
-```
-pip install mazegen-1.0.0-py3-none-any.whl
-```
 
 * **The project reads maze parameters from a plain text file. The format must follow a KEY=VALUE structure:**
 
 
 ```Plaintext
-WIDTH=10
-HEIGHT=10
-ENTRY=1,1
-EXIT=9, 9
+WIDTH=20
+HEIGHT=15
+ENTRY=0,0
+EXIT=14,19
 OUTPUT_FILE=maze.txt
 PERFECT=True
-GEN_ALGO=aldous
 ```
+* **WIDTH (20) & HEIGHT (15): The maze will be a matrix of 300 cells total.**
+* **ENTRY (0,0): The starting point is the top-left corner of the maze.**
+* **EXIT (14,19): The destination is the bottom-right corner.**
+* **PERFECT=True: This ensures the maze is "perfect". There are no loops and exactly one unique path from the entry to the exit. If "False", the maze becomes "non-perfect", multiple paths to the exit**
+* **OUTPUT_FILE: The solution and maze data will be saved to maze.txt in hexadecimal and direction formats.**
+
 ## Installing and importing the whole project process:
-* Let's assume u sent the file to a friend, your friend needs to:
+### Move the mazegen package
+    ```bash
+    mv mazegen ..
+    ```
 ### Install the file
     ```bash
     pip install mazegen-1.0.0-py3-none-any.whl
     ```
-### Creates a brand new file anywhere on the computer then write:
-    ```Python
-    from mazegen.maze_logic import MazeGenerator
-    width = 10
-    height = 15
-
-    gen = MazeGenerator(height, width)
-    data = gen.aldous_generate("None")
-    print(f"Successfully generated a maze with {height} rows.")
-    ```
 ### Run:
     '''bash
-    python3 file_name.py
+    python3 file_name.py config_file.txt
     '''
+### Move the package back
+    ```bash
+    mv ../mazegen .
+    ```
+
 * we used two algorithms, each one can create a perfect maze
 ## 1-Binary Tree algorithm:
 The Binary Tree algorithm iterates through the grid and, for each cell, randomly chooses to carve a path either North or East.

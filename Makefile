@@ -1,6 +1,6 @@
 PYTHON = python3
 
-.PHONY:	run clean debug liny lint-strict build
+.PHONY:	run clean debug lint lint-strict build
 
 install:
 		pip install poetry
@@ -24,8 +24,8 @@ clean:
 		find . -type d -name ".mypy_cache" -exec rm -rf {} +
 
 lint:
-		poetry run flake8 .
-		poetry run mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+		poetry run flake8 mazegen/*.py a_maze_ing.py
+		poetry run mypy mazegen/*.py a_maze_ing.py --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
 lint-strict:
-		poetry run flake8 .
-		poetry run mypy . --strict
+		poetry run flake8 mazegen/*.py a_maze_ing.py
+		poetry run mypy mazegen/*.py a_maze_ing.py --strict
